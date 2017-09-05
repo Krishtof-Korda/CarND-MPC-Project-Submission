@@ -1,3 +1,90 @@
+# Korda's Model Predictive Controller Project for Udacity Self-driving Car Nanodegree
+
+[YouTube Video](https://youtu.be/UY5qKKaF1ik)
+
+[![alt text](https://img.youtube.com/vi/UY5qKKaF1ik/0.jpg)](https://youtu.be/UY5qKKaF1ik)
+
+### This is my submission for the project described below. I implemented a Model Predictive Controller (MPC) for the steering and throttle of a simulated car given waypoint information from the simulator. [Here are the rubric points of the project](https://review.udacity.com/#!/rubrics/896/view)
+
+### The main focus of the project was tuning the cost functions to arrive at a stable controller that would make it around the track smoothly and in a timely manner. We also had to account for 100ms of actuator latency in simulator. This was meant to approximate real world latency in self-driving cars. I accomplished the latency corrections by calulating where the car would be after the 100ms and using that position and orientation to feed the controller state. This assured that the input that the controller commanded was an input appropriate for the vehicles position 100ms in the future.
+
+### I began my search for the proper cost function weights at unity for all and no correction for latency, just so I could see what the baseline performance was. This led to unsurprisingly poor results illustrated in the video below. The controller starts out looking normal but very quickly develops huge instabilities. (see video below)
+
+[YouTube Video](https://youtu.be/GbqSm-CET-8)
+
+[![alt text](https://img.youtube.com/vi/GbqSm-CET-8/0.jpg)](https://youtu.be/GbqSm-CET-8)
+
+### I then tried to add 100X cost to the orientation (psi) error, while leaving all other cost weights at unity. This helped a little and it almost looked like it was going to be stable but again instabilities grew after the first few seconds. (see video below)
+
+
+[YouTube Video](https://youtu.be/GE71lUcRukY)
+
+[![alt text](https://img.youtube.com/vi/GE71lUcRukY/0.jpg)](https://youtu.be/GE71lUcRukY)
+
+
+### Then I tried bumping up the cost for using the steering actuator. This helped to smooth out the instabilities much longer but again it only bought me some time before it became unstable again. (see video below)
+
+
+[YouTube Video](https://youtu.be/05LQ86IjgGA)
+
+[![alt text](https://img.youtube.com/vi/05LQ86IjgGA/0.jpg)](https://youtu.be/05LQ86IjgGA)
+
+
+### Now that I could see which weights in the cost funcitons were helping stabilize the system I implemented latency correciton and brought the cost weights back to unity to see how it affected the system. The latency correction was slightly better than raw unity in stayin on track for a few seconds but was still very poor. (see video below)
+
+
+[YouTube Video](https://youtu.be/ZCOL-b-2aQk)
+
+[![alt text](https://img.youtube.com/vi/ZCOL-b-2aQk/0.jpg)](https://youtu.be/ZCOL-b-2aQk)
+
+
+### Now that I had seen all the effects of each weight and implemenation independently I spent a few hours tuning the cost weights until I arrived a stable system with the following weight and cost functions:
+
+```
+// adjustable weights for costs
+    const double w_cte = 1;
+    const double w_epsi = 100;
+    const double w_v = 1;
+    const double w_delta = 10000;
+    const double w_a = 7;
+    const double w_delta_smooth = 1000;
+    const double w_a_smooth = 1;
+
+    // The part of the cost based on the reference state.
+    for (int t = 0; t < N; t++) {
+      fg[0] += w_cte * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += w_epsi * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += w_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
+    }
+    
+    // Minimize the use of actuators.
+    for (int t = 0; t < N - 1; t++) {
+      fg[0] += w_delta * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += w_a * CppAD::pow(vars[a_start + t], 2);
+    }
+    
+    // Minimize the value gap between sequential actuations.
+    for (int t = 0; t < N - 2; t++) {
+      fg[0] += w_delta_smooth * CppAD::pow(vars[delta_start + t + 1]
+                                         - vars[delta_start + t], 2);
+      fg[0] += w_a_smooth * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+    }
+
+```
+
+### As you can see in the video below the vehicle is stable and predicts a proper path for negotiating corners even at considerable speed (75 mph). 
+
+[YouTube Video](https://youtu.be/UY5qKKaF1ik)
+
+[![alt text](https://img.youtube.com/vi/UY5qKKaF1ik/0.jpg)](https://youtu.be/UY5qKKaF1ik)
+
+
+### I learned that there is a delicate balance when it comes to tuning an MPC. For this implementation I really had to tune up the cost of using the steering actuator to stabilize oscillations. The throttle control was not as critical. I did try to implement a cost function to reduce throttle during high steering angles but was not successfull in separating throttle control from steering control. This is one thing I would definitely like to implement in the future. 
+
+#### Thanks to the Udacity content creators for making yet another fun and challenging project.
+
+---
+
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
