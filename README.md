@@ -6,7 +6,43 @@
 
 ### This is my submission for the project described below. I implemented a Model Predictive Controller (MPC) for the steering and throttle of a simulated car given waypoint information from the simulator. [Here are the rubric points of the project](https://review.udacity.com/#!/rubrics/896/view)
 
-### The main focus of the project was tuning the cost functions to arrive at a stable controller that would make it around the track smoothly and in a timely manner. We also had to account for 100ms of actuator latency in simulator. This was meant to approximate real world latency in self-driving cars. I accomplished the latency corrections by calulating where the car would be after the 100ms and using that position and orientation to feed the controller state. This assured that the input that the controller commanded was an input appropriate for the vehicles position 100ms in the future.
+### The main focus of the project was tuning the cost functions, time horizon, and time step to arrive at a stable controller that would make it around the track smoothly and in a timely manner. We also had to account for 100ms of actuator latency in simulator. This was meant to approximate real world latency in self-driving cars. I accomplished the latency corrections by calulating where the car would be after the 100ms and using that position and orientation to feed the controller state. This assured that the input that the controller commanded was an input appropriate for the vehicles position 100ms in the future.
+
+### The model is constrained using the following functions with vehicle x, y (position), psi (heading), v (velocity), cte (cross-track error), and epsi (heading error):
+
+```
+// Model contraints: x
+      fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+      fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+      fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 * dt / Lf);
+      fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
+      fg[1 + cte_start + t] = cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
+      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
+```
+### Bounds were set for the actuators to prevent overdriving them:
+
+```
+  // Set all non-actuators upper and lowerlimits
+  // to the max negative and positive values.
+  for (int i = 0; i < delta_start; i++) {
+    vars_lowerbound[i] = -1.0e19;
+    vars_upperbound[i] = 1.0e19;
+  }
+  
+  // The upper and lower limits of delta are set to -25 and 25
+  // degrees (values in radians).
+  for (int i = delta_start; i < a_start; i++) {
+    vars_lowerbound[i] = -0.436332;
+    vars_upperbound[i] = 0.436332;
+  }
+  
+  // Acceleration/decceleration upper and lower limits.
+  const double throttle_min = -1.0;
+  const double throttle_max = 1.0;
+  for (int i = a_start; i < n_vars; i++) {
+    vars_lowerbound[i] = throttle_min;
+    vars_upperbound[i] = throttle_max;
+```
 
 ### I began my search for the proper cost function weights at unity for all and no correction for latency, just so I could see what the baseline performance was. This led to unsurprisingly poor results illustrated in the video below. The controller starts out looking normal but very quickly develops huge instabilities. (see video below)
 
@@ -78,6 +114,7 @@
 
 [![alt text](https://img.youtube.com/vi/UY5qKKaF1ik/0.jpg)](https://youtu.be/UY5qKKaF1ik)
 
+### Now that the system was stable I played around with the number of time steps, N and the time between steps, dt. If N was too small the vehicle did not have enough sight into the future to see around conrners. Conversely, if N was too large there were some really strange curve fitting problems that led to unusable data. After playing I settled on N = 20 and dt = 0.05. this led to the best look ahead without looking too far ahead. I chose 0.05 because it was twice as fast as the latency of the system which I believed would provide enough continuity in the actuations. This choice of N and dt led to a stable system that tracked well and did not exhibit dicretization errors.
 
 ### I learned that there is a delicate balance when it comes to tuning an MPC. For this implementation I really had to tune up the cost of using the steering actuator to stabilize oscillations. The throttle control was not as critical. I did try to implement a cost function to reduce throttle during high steering angles but was not successfull in separating throttle control from steering control. This is one thing I would definitely like to implement in the future. 
 
