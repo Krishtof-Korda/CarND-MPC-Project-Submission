@@ -1,0 +1,3 @@
+/Users/KrazyK/Documents/Udacity/CarND-Model-Predictive-Controller/CarND-MPC-Project-Submission/CMakeFiles/mpc.dir
+/Users/KrazyK/Documents/Udacity/CarND-Model-Predictive-Controller/CarND-MPC-Project-Submission/CMakeFiles/ALL_BUILD.dir
+/Users/KrazyK/Documents/Udacity/CarND-Model-Predictive-Controller/CarND-MPC-Project-Submission/CMakeFiles/ZERO_CHECK.dir
