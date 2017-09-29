@@ -66,7 +66,7 @@
 [![alt text](https://img.youtube.com/vi/05LQ86IjgGA/0.jpg)](https://youtu.be/05LQ86IjgGA)
 
 
-### Now that I could see which weights in the cost funcitons were helping stabilize the system I implemented latency correciton and brought the cost weights back to unity to see how it affected the system. The latency correction was slightly better than raw unity in stayin on track for a few seconds but was still very poor. (see video below)
+### Now that I could see which weights in the cost funcitons were helping stabilize the system I implemented latency correciton and brought the cost weights back to unity to see how it affected the system. The latency correction was slightly better than raw unity in staying on track for a few seconds but was still very poor. (see video below)
 
 
 [YouTube Video](https://youtu.be/ZCOL-b-2aQk)
